@@ -5,6 +5,10 @@ from algorithms import CellType, SchemaType
 
 
 def generate_ordered_data() -> tuple[SchemaType, list[list[Any]]]:
+    """Generate ordered data for test cases.
+
+    :return:
+    """
     max_strings = 100
     max_string_length = 3
     string_number = 0
@@ -92,6 +96,13 @@ def generate_ordered_data() -> tuple[SchemaType, list[list[Any]]]:
 
 
 def check_equal(x: Any, y: Any, eps: float = 0.01) -> bool:
+    """Check two elements by equal.
+
+    :param x: first element.
+    :param y: second element.
+    :param eps: epsilon for float equal.
+    :return:
+    """
     assert type(x) == type(y), \
         f'Types of parallels elements is not equal ({type(x).__name__} != {type(y).__name__})'
 
@@ -102,7 +113,13 @@ def check_equal(x: Any, y: Any, eps: float = 0.01) -> bool:
         return x == y
 
 
-def check_equal_data(data, new_data) -> bool:
+def check_equal_data(data: list[Any], new_data: list[Any]) -> bool:
+    """Check two rows by equal.
+
+    :param data: first row.
+    :param new_data: second row.
+    :return:
+    """
     for row_index, (row, new_row) in enumerate(zip(data, new_data)):
         assert len(row) == len(new_row), f'Rows length is not equal ({len(row)} != {len(new_row)})\n{row}\n{new_row}'
         for i, (x, y) in enumerate(zip(row, new_row)):
