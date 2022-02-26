@@ -74,11 +74,13 @@ def generate_ordered_data() -> tuple[SchemaType, list[list[Any]]]:
 
     data = []
     boolean_value = False
+    is_null = False
     for string_ in create_strings():
         for character in string.ascii_lowercase[:12]:
             for number in create_integers():
                 for float_number in create_float():
                     boolean_value = not boolean_value
+                    is_null = not is_null
 
                     row = [None] * len(schema)
                     row[-1] = row[-3] = string_
@@ -89,6 +91,10 @@ def generate_ordered_data() -> tuple[SchemaType, list[list[Any]]]:
                         row[index] = number
                     for index in (11, 12, 13):
                         row[index] = float_number
+
+                    if is_null:
+                        for index in (1, 3, 7, 11, 13, 14):
+                            row[index] = None
 
                     data.append(row)
 
@@ -107,7 +113,11 @@ def check_equal(x: Any, y: Any, eps: float = 0.01) -> bool:
         f'Types of parallels elements is not equal ({type(x).__name__} != {type(y).__name__})'
 
     type_ = type(x)
-    if type_ == float:
+    if x is None and y is None:
+        return True
+    elif x is None or y is None:
+        return False
+    elif type_ == float:
         return abs(x - y) < eps
     else:
         return x == y

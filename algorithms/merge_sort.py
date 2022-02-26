@@ -2,7 +2,10 @@ from os import path, remove
 import struct
 from dataclasses import dataclass
 
-from .serialize import CellType, serialize, deserialize, SIZE_BY_MARK, ROW_SIZE_TYPE, SchemaType
+from .serialize import (
+    CellType, serialize, deserialize, SchemaType,
+    LENGTH_ROW_TYPE,
+)
 
 
 @dataclass
@@ -54,11 +57,11 @@ def split_file(file_name: str, info: SortInfo) -> tuple[str, str]:
     file_size = path.getsize(file_name)
 
     with open(file_name, 'rb') as file:
-        row_length_size = SIZE_BY_MARK[ROW_SIZE_TYPE[0]]
+        row_length_size = LENGTH_ROW_TYPE.schema[0].size
 
         index = 0
         while index < file_size // 2:
-            row_size = struct.unpack('=' + ROW_SIZE_TYPE[0], file.read(row_length_size))[0]
+            row_size = struct.unpack('=' + LENGTH_ROW_TYPE.schema[0].mark, file.read(row_length_size))[0]
             index += row_size
             file.seek(index)
 
@@ -98,6 +101,7 @@ def merge_files(left_file_name: str, right_file_name: str, info: SortInfo) -> st
     """
     result_file_name = path.join(info.tmp_directory, GENERATOR_ID.next_id())
     left_size, right_size = path.getsize(left_file_name), path.getsize(right_file_name)
+    less, greater = info.schema[info.schema_sort_index].less, info.schema[info.schema_sort_index].greater
     with open(left_file_name, 'rb') as left_file, \
             open(right_file_name, 'rb') as right_file, \
             open(result_file_name, 'wb') as result_file:
@@ -128,10 +132,13 @@ def merge_files(left_file_name: str, right_file_name: str, info: SortInfo) -> st
             while left_row_index < len(left_rows) and right_row_index < len(right_rows):
                 x, y = left_rows[left_row_index], right_rows[right_row_index]
                 x_key, y_key = x[info.schema_sort_index], y[info.schema_sort_index]
-                if (x_key < y_key and info.is_ascending_order) or (x_key > y_key and not info.is_ascending_order):
+
+                assert x_key is not None and y_key is not None, 'Null does not compare'
+
+                if (less(x_key, y_key) and info.is_ascending_order) or (greater(x_key, y_key) and not info.is_ascending_order):
                     result_rows.append(x)
                     left_row_index += 1
-                elif (x_key > y_key and info.is_ascending_order) or (x_key < y_key and not info.is_ascending_order):
+                elif (greater(x_key, y_key) and info.is_ascending_order) or (less(x_key, y_key) and not info.is_ascending_order):
                     result_rows.append(y)
                     right_row_index += 1
                 else:
